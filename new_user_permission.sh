@@ -19,7 +19,7 @@ cria_usuario() {
       smbpasswd -a $nome
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$momento - O usuário $nome foi criado com sucesso!" >> $log
-      echo -e "$momento - O usuário $nome foi criado com sucesso!\e[m \n"
+      echo -e "$momento - \e[32;1;1mO usuário $nome foi criado com sucesso!\e[m \n"
       read -p "Tecle <Enter> para continuar..."
   fi
 }
@@ -54,7 +54,7 @@ cria_grupo() {
       groupadd $grupo
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$momento - O grupo $grupo foi criado com sucesso!" >> $log
-      echo -e "$momento - O grupo $grupo foi criado com sucesso!\e[m \n"
+      echo -e "$momento - \e[32;1;1mO grupo $grupo foi criado com sucesso!\e[m \n"
       read -p "Tecle <Enter> para continuar..."
   fi
 }
@@ -142,4 +142,4 @@ fi
 
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 echo -e "$momento - Script encerrado. \n" >> $log
-echo -e "\e[32;1;1m$momento - Script encerrado.\e[m \n"
+echo -e "$momento - \e[32;1;1mScript encerrado.\e[m \n"
