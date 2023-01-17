@@ -29,12 +29,14 @@ remove_usuario() {
 #  "mini menu com opcoes -listar usuarios -digitar usuario"
   read -p "Digite o nome do usuário a ser removido: " d_nome
   if [ $(getent passwd $d_nome) ] ; then
-    deluser --remove-all-files $d_nome
-    echo -e "Usuário $d_nome removido completamente."
-    echo "$momento"
+    read -p "Tem certeza que deseja excluir o usuário $d_nome? Digite sim e dê Enter: " decisao
+    if [ "$decisao" = "sim" ]; then
+      deluser --remove-all-files $d_nome
+      echo -e "$momento - Usuário $d_nome removido completamente."
+    fi
   else
     echo "O usuário $d_nome não existe, verifique se o nome digitado está correto."
-    sleep 10
+    sleep 4
   fi
 }
 
@@ -45,8 +47,9 @@ menu_inicial() {
     echo -e "\e[32;1;1m2 \e[m- Opcao 2"
     echo -e "\e[32;1;1m3 \e[m- Opcao 3"
     echo -e "\e[32;1;1m0 \e[m- Remover"
+    echo "- - -"
     echo -e "\e[32;1;1m9 \e[m- Sair"
-    echo -e "\e[32;1;1m#####\e[m \n"
+    echo -e "\e[32;1;1m##### ##### ##### ##### ##### ##### #####\e[m \n"
 }
 
 verifica_SU() {
