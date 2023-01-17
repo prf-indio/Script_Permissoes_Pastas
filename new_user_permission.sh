@@ -14,7 +14,7 @@ cria_usuario() {
       adduser --no-create-home --disabled-login --disabled-password --shell /usr/sbin/nologin --quiet $nome
       sleep 2
       clear
-      echo "Crie uma senha para acessar o compartilhamento de pastas."
+      echo -e "\e[32;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
       smbpasswd -a $nome
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$momento - O usuário $nome foi criado com sucesso!" >> $log
@@ -24,7 +24,7 @@ cria_usuario() {
 }
 
 cria_grupo() {
-  groupadd "$nome"
+  #groupadd "$nome"
   return 0
 }
 
@@ -36,16 +36,19 @@ altera_permissao() {
 }
 
 remove_usuario() {
-  # Pensar em criar mini menu com opcoes -listar usuarios -digitar usuario
   read -p "Digite o nome do usuário a ser removido: " d_nome
-  deluser $d_nome
-  if [ $? -eq 0 ] ;
+  smbpasswd -x $d_nome
+    if [ $? -eq 0 ] ;
     then
+      deluser $d_nome
+      clear
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-      echo "$momento - Usuário $d_nome removido." >> $log
+      echo "$momento - Usuário $d_nome foi removido." >> $log
       echo -e "$momento - \e[32;1;1mUsuário $d_nome removido completamente.\e[m \n"
       read -p "Tecle <Enter> para continuar..."
     else
+      clear
+      echo "O usuário $d_nome não existe!"
       read -p "Tecle <Enter> para retornar ao menu."
   fi
 }
