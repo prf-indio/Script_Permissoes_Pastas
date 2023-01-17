@@ -1,20 +1,25 @@
 #!/bin/bash
 
-momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 log="/var/log/new_user.log"
+momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+echo -e "$momento - Script iniciado." >> $log
+
 cria_usuario() {
   read -p "Digite um nome para o novo usuário: " nome
   if [ $(getent passwd $nome) ] ; then
     echo "O usuário $nome já existe, tente outro nome."
+    break
   else
     adduser --no-create-home --disabled-login --disabled-password --shell /usr/sbin/nologin $nome
     smbpasswd -a $nome
-#   return $nome
+    echo "$momento - O usuário $nome foi criado com sucesso!" >> $log
+    echo "$momento - O usuário $nome foi criado com sucesso!"
+    sleep 8
   fi
 }
 
 cria_grupo() {
-  groupadd "$nome-g"
+  groupadd "$nome"
 }
 
 '''
@@ -33,20 +38,21 @@ remove_usuario() {
     if [ "$decisao" = "sim" ]; then
       deluser --remove-all-files $d_nome
       echo -e "$momento - Usuário $d_nome removido completamente."
+      sleep 8
     fi
   else
     echo "O usuário $d_nome não existe, verifique se o nome digitado está correto."
-    sleep 4
+    sleep 8
   fi
 }
 
 menu_inicial() {
     clear
     echo -e "\e[32;1;1m#####Entre com o numero da opcao desejada:\e[m"
-    echo -e "\e[32;1;1m1 \e[m- Opcao 1"
-    echo -e "\e[32;1;1m2 \e[m- Opcao 2"
-    echo -e "\e[32;1;1m3 \e[m- Opcao 3"
-    echo -e "\e[32;1;1m0 \e[m- Remover"
+    echo -e "\e[32;1;1m1 \e[m- Criar usuário"
+    echo -e "\e[32;1;1m2 \e[m- Criar grupo"
+    echo -e "\e[32;1;1m3 \e[m- Alterar permissão de pasta"
+    echo -e "\e[32;1;1m0 \e[m- Remover usuário"
     echo "- - -"
     echo -e "\e[32;1;1m9 \e[m- Sair"
     echo -e "\e[32;1;1m##### ##### ##### ##### ##### ##### #####\e[m \n"
@@ -76,7 +82,6 @@ else
         echo "Encerrando o script..."
         sleep 2
         clear
-        echo -e "Script encerrado em $momento. \n"
         break ;;
         0) remove_usuario ;;
         *) echo "Opção incorreta!" ;;
@@ -84,3 +89,7 @@ else
     menu_inicial
   done
 fi
+
+momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+echo -e "$momento - Script encerrado. \n" >> $log
+echo -e "$momento - Script encerrado. \n"
