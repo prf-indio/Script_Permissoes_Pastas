@@ -2,17 +2,20 @@
 ### Patrick R. Faria - GTI ###
 log="/var/log/new_user.log"
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-echo -e "$momento - Script iniciado." >> $log
+lasthost=`last -i -n 1 | awk 'FNR==1{print $3}'`
+echo -e "$momento - Script iniciado pelo host \e[32;1;1m$lasthost\e[m." >> $log
 
 cria_usuario() {
   unset nome
   read -p "Digite um nome para o novo usuário: " nome
+  nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
   if [ $(getent passwd $nome) ] ;
     then
       echo "O usuário $nome já existe, tente outro nome."
       read -p "Tecle <Enter> para retornar ao menu."
     else
       adduser --no-create-home --disabled-login --disabled-password --shell /usr/sbin/nologin --quiet $nome
+      #talvez criar aqui, uma testagem para só continuar se o comando der certo
       sleep 1
       clear
       echo -e "\e[32;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
@@ -27,6 +30,7 @@ cria_usuario() {
 remove_usuario() {
   unset nome
   read -p "Digite o nome do usuário a ser removido: " nome
+  nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
   smbpasswd -x $nome
     if [ $? -eq 0 ] ;
     then
@@ -88,7 +92,10 @@ altera_permissao() {
   #if [ -d $pasta ] ; then
   #else
   #fi
-  return 0
+  read -p "Qual pasta? " pasta
+  pasta=$(echo $pasta | sed -r 's/(.*)/\U\1/g')
+  echo "$pasta"
+  read -p "Tecle <Enter> para continuar..."
 }
 
 
@@ -129,10 +136,10 @@ if [ $? -ne "0" ];
         8) remove_usuario ;;
         9) remove_grupo ;;
         0) clear
-        echo "Encerrando o script..."
-        sleep 2
-        clear
-        break ;;
+          echo "Encerrando o script..."
+          sleep 1
+          clear
+          break ;;
         *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
