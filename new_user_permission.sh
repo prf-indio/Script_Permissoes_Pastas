@@ -7,8 +7,10 @@ lasthost=`last -i -n 1 | awk 'FNR==1{print $3}'`
 echo -e "$momento - Script iniciado pelo host \e[32;1;1m$lasthost\e[m." >> $log
 
 cria_pasta() {
+  clear
   #talvez ter um mini menu perguntando se quer criar uma pasta nova ou só atribuir alguma permissão a usuario e pastas já existentes
   #está função podera chamar função de criar usuario caso este não esteja criado?
+  unset nomepasta
   read -p "Qual pasta? " nomepasta
   nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g')
   pasta="$raiz$nomepasta"
@@ -20,32 +22,45 @@ cria_pasta() {
       mkdir $pasta
       echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n" >> $log
       echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
-      #Inserir um IFF para perguntar se deseja atribuir uma permissão a um usuário ou grupo
       read -p "Deseja atribuir um usuário como dono desta pasta? (S)im ou (N)ão? [N] " opcao
       case $opcao in
         n|N|"") echo "Retornando para o menu..."
           sleep 1
           break ;;
-        s|S) altera_permissao ;;
+        s|S) altera_permissao 1 ;;
         *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
-
   fi
 }
 
 altera_permissao() {
-  read -p "Cheguei aqui para alterar permissão"
-  return 0
+  #teste Se usuario nao existir, perguntar se deseja criar
+  if [ $1 -eq 0 ] ;
+    then
+      read -p "Qual pasta deseja alterar a permisão? "
+      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g')
+      pasta="$raiz$nomepasta"
+      if [ -d $pasta ] ;
+        then
+          echo "Alterar permissoes"
+        else
+          echo "Pasta não existe. Deseja criar?"
+      fi
+    else
+      echo -e "Deseja alterar permissões da ultima pasta criada?\nPasta: \e[32;1;1m$nomepasta\e[m "
+      read -p "Tecle <Enter> para retornar ao menu."
+  fi
 }
 
 cria_usuario() {
+  clear
   unset nome
   read -p "Digite um nome para o novo usuário: " nome
   nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
   if [ $(getent passwd $nome) ] ;
     then
-      echo "O usuário $nome já existe, tente outro nome."
+      echo -e "O usuário $nome já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
       #adduser --disabled-login --disabled-password --no-create-home --shell /usr/sbin/nologin --quiet $nome
@@ -63,6 +78,7 @@ cria_usuario() {
 }
 
 remove_usuario() {
+  clear
   unset nome
   read -p "Digite o nome do usuário a ser removido: " nome
   nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
@@ -77,18 +93,19 @@ remove_usuario() {
       read -p "Tecle <Enter> para continuar..."
     else
       clear
-      echo "O usuário $nome não existe!"
+      echo -e "O usuário $nome não existe ou não é um usuário válido para remover!\n"
       read -p "Tecle <Enter> para retornar ao menu."
   fi
 }
 
 cria_grupo() {
+  clear
   unset grupo
   read -p "Digite um nome para o novo usuário: " grupo
   grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
   if [ $(getent passwd $grupo) ] ;
     then
-      echo "O grupo $grupo já existe, tente outro nome."
+      echo -e "O grupo $grupo já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
       groupadd $grupo
@@ -100,6 +117,7 @@ cria_grupo() {
 }
 
 remove_grupo() {
+  clear
   unset grupo
   read -p "Digite o nome do grupo a ser excluído: " grupo
   grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
@@ -112,7 +130,7 @@ remove_grupo() {
       read -p "Tecle <Enter> para continuar..."
     else
       clear
-      echo "O grupo $grupo não existe!"
+      echo -e "O grupo $grupo não existe!\n"
       read -p "Tecle <Enter> para retornar ao menu."
   fi
 }
