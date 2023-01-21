@@ -63,34 +63,35 @@ cria_pasta() {
 
 altera_permissao() {
   clear
-  unset nome
-  read -p "Qual usuário deve ser dono desta pasta? Digite o nome: " nome
-  nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
-  if [ $(getent passwd $nome) ] ;
+  unset grupo
+  read -p "Qual grupo deve ser dono desta pasta? Digite o nome: " grupo
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+  if [ $(getent group $grupo) ] ;
     then
-      chown -R $nome $pasta
-      echo -e "O usuário $nome é o novo dono da pasta $nomepasta.\n"
-      read -p "Deseja tornar dono desta pasta um grupo diferente? (S)im ou (N)ão? [N] " opcao
+      chgrp -R $grupo $pasta
+      momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+      echo -e "$momento - Permissão da pasta \e[32;1;1m$nomepasta\e[m alterada. O grupo \e[32;1;1m$grupo\e[m é o novo dono." >> $log
+      echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
+      read -p "Deseja também tornar um Usuário específico dono desta pasta? (S)im ou (N)ão? [N] " opcao
       if [ $opcao == "S"] ;
         then
-          unset grupo
-          read -p "Digite o nome do grupo que deseja tornar dono desta pasta: " grupo
-          grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
-          if [ $(getent group $grupo) ] ;
+          unset nome
+          read -p "Digite o nome do usuário que deseja tornar dono desta pasta: " nome
+          nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
+          if [ $(getent passwd $nome) ] ;
             then
-              chgrp -R $grupo $pasta
-              echo -e "O grupo $grupo é o novo dona da pasta $nomepasta.\n"
+              chown -R $nome $pasta
+              momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+              echo -e "$momento - Permissão da pasta \e[32;1;1m$nomepasta\e[m alterada. O usuário \e[32;1;1m$nome\e[m é o novo dono." >> $log
+              echo -e "O usuário $nome é o novo dono da pasta $nomepasta.\n"
               read -p "Tecle <Enter> para continuar..."
             else
-              groupadd $grupo
-              momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-              echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso!" >> $log
-              echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso! \n"
+              echo "Este usuário não existe!"
               read -p "Tecle <Enter> para continuar..."
           fi
         else
           echo "Retornando para o menu..."
-          sleep 1
+          sleep 2
       fi
     else
       echo -e "Este usuário $nome NÃO existe."
@@ -163,6 +164,7 @@ cria_usuario() {
       echo -e "$momento - O usuário \e[32;1;1m$nome\e[m foi criado com sucesso!" >> $log
       echo -e "$momento - O usuário \e[32;1;1m$nome\e[m foi criado com sucesso! \n"
       read -p "Tecle <Enter> para continuar..."
+      #perguntar se deseja criar grupo com mesmo nome
   fi
 }
 
@@ -203,6 +205,8 @@ cria_grupo() {
       echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso! \n"
       read -p "Tecle <Enter> para continuar..."
   fi
+  #perguntar se deseja criar usuário com mesmo nome
+  #perguntar se quer alterar permissão de alguma pasta
 }
 
 remove_grupo() {
@@ -266,8 +270,8 @@ if [ $? -ne "0" ];
       echo "O que deseja fazer?"
       read -p "> " opcao_menu
       case $opcao_menu in
-        1) cria_pasta ;;
-        2) menu_altera_permissao ;;
+        1) cria_pasta 0 ;;
+        2) menu_altera_permissao 0 ;;
         3) cria_usuario ;;
         4) cria_grupo ;;
         5) adiciona_a_grupo ;;
