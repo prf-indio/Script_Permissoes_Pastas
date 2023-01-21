@@ -109,7 +109,6 @@ altera_permissao() {
           read -p "Tecle <Enter> para retornar ao menu."
           ;;
         esac
-      fi
     else
       echo -e "Este grupo $grupo NÃO existe."
       unset opcao
@@ -221,6 +220,7 @@ cria_grupo() {
       echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso!" >> $log
       echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso! \n"
       read -p "Tecle <Enter> para continuar..."
+      #Deseja inserir algum usuario a este grupo?
   fi
   #perguntar se deseja criar usuário com mesmo nome
   #perguntar se quer alterar permissão de alguma pasta
