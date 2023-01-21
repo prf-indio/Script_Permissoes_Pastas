@@ -13,9 +13,9 @@ cria_pasta() {
       unset opcao
       mkdir $pasta
       chmod -R 770 $pasta
-      echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n" >> $log
+      echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
       echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
-      read -p "Deseja atribuir um usuário como dono desta pasta? (S)im ou (N)ão? [N] " opcao
+      read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
       case $opcao in
         n|N|"") echo "Retornando para o menu..."
           sleep 1
@@ -46,9 +46,9 @@ cria_pasta() {
           unset opcao
           mkdir $pasta
           chmod -R 770 $pasta
-          echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n" >> $log
+          echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
           echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
-          read -p "Deseja atribuir um usuário como dono desta pasta? (S)im ou (N)ão? [N] " opcao
+          read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
           case $opcao in
             n|N|"") echo "Retornando para o menu..."
               sleep 1
@@ -87,21 +87,30 @@ altera_permissao() {
               read -p "Tecle <Enter> para continuar..."
             else
               echo "Este usuário não existe!"
-              read -p "Tecle <Enter> para continuar..."
+              unset opcao
+              read -p "Deseja criá-lo? (S)im ou (N)ão? [N] " opcao
+              case $opcao in
+                n|N|"") echo "Retornando para o menu..."
+                  sleep 1
+                  break ;;
+                s|S) cria_usuario ;;
+                *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+                read -p "Tecle <Enter> para retornar ao menu." ;;
+              esac
           fi
         else
           echo "Retornando para o menu..."
           sleep 2
       fi
     else
-      echo -e "Este usuário $nome NÃO existe."
+      echo -e "Este grupo $grupo NÃO existe."
       unset opcao
       read -p "Deseja criar? (S)im ou (N)ão? [N] " opcao
       case $opcao in
         n|N|"") echo "Retornando para o menu..."
           sleep 1
           break ;;
-        s|S) cria_usuario ;;
+        s|S) cria_grupo ;;
         *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
