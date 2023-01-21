@@ -72,9 +72,10 @@ altera_permissao() {
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo -e "$momento - Permissão da pasta \e[32;1;1m$nomepasta\e[m alterada. O grupo \e[32;1;1m$grupo\e[m é o novo dono." >> $log
       echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
+      unset opcao
       read -p "Deseja também tornar um Usuário específico dono desta pasta? (S)im ou (N)ão? [N] " opcao
-      if [ $opcao == "S"] ;
-        then
+      case $opcao in
+        s|S)
           unset nome
           read -p "Digite o nome do usuário que deseja tornar dono desta pasta: " nome
           nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
@@ -98,9 +99,16 @@ altera_permissao() {
                 read -p "Tecle <Enter> para retornar ao menu." ;;
               esac
           fi
-        else
+            ;;
+        n|N|"")
           echo "Retornando para o menu..."
           sleep 2
+          ;;
+        *)
+          echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+          read -p "Tecle <Enter> para retornar ao menu."
+          ;;
+        esac
       fi
     else
       echo -e "Este grupo $grupo NÃO existe."
