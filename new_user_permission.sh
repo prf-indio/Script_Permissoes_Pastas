@@ -8,18 +8,11 @@ echo -e "$momento - Script iniciado pelo host \e[32;1;1m$lasthost\e[m." >> $log
 
 cria_pasta() {
   clear
-  #talvez ter um mini menu perguntando se quer criar uma pasta nova ou só atribuir alguma permissão a usuario e pastas já existentes
-  #está função podera chamar função de criar usuario caso este não esteja criado?
-  unset nomepasta
-  read -p "Qual pasta? " nomepasta
-  nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g')
-  pasta="$raiz$nomepasta"
-  if [ -d $pasta ] ;
+  if [ $1 -eq 2 ] ;
     then
-      echo "A pasta $nomepasta já existe! Verifique se o nome digitado está correto."
-      read -p "Tecle <Enter> para retornar ao menu."
-    else
+      unset opcao
       mkdir $pasta
+      chmod -R 770 $pasta
       echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n" >> $log
       echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
       read -p "Deseja atribuir um usuário como dono desta pasta? (S)im ou (N)ão? [N] " opcao
@@ -27,29 +20,125 @@ cria_pasta() {
         n|N|"") echo "Retornando para o menu..."
           sleep 1
           break ;;
-        s|S) altera_permissao 1 ;;
+        s|S) menu_altera_permissao 1 ;;
+        *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+          read -p "Tecle <Enter> para retornar ao menu." ;;
+      esac
+    else
+      unset nomepasta
+      read -p "Qual o nome da pasta que deseja criar? " nomepasta
+      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g')
+      pasta="$raiz$nomepasta"
+      if [ -d $pasta ] ;
+        then
+          unset opcao
+          echo "A pasta $nomepasta já existe! Verifique se o nome digitado está correto."
+          read -p "Deseja alterar a permissão desta pasta? (S)im ou (N)ão? [N] " opcao
+          case $opcao in
+            n|N|"") echo "Retornando para o menu..."
+              sleep 1
+              break ;;
+            s|S) menu_altera_permissao 1 ;;
+            *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+              read -p "Tecle <Enter> para retornar ao menu." ;;
+          esac
+        else
+          unset opcao
+          mkdir $pasta
+          chmod -R 770 $pasta
+          echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n" >> $log
+          echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
+          read -p "Deseja atribuir um usuário como dono desta pasta? (S)im ou (N)ão? [N] " opcao
+          case $opcao in
+            n|N|"") echo "Retornando para o menu..."
+              sleep 1
+              break ;;
+            s|S) menu_altera_permissao 1 ;;
+            *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+              read -p "Tecle <Enter> para retornar ao menu." ;;
+          esac
+      fi
+  fi
+}
+
+altera_permissao() {
+  clear
+  unset nome
+  read -p "Qual usuário deve ser dono desta pasta? Digite o nome: " nome
+  nome=$(echo $nome | sed -r 's/(.*)/\L\1/g')
+  if [ $(getent passwd $nome) ] ;
+    then
+      chown -R $nome $pasta
+      echo -e "O usuário $nome é o novo dono da pasta $nomepasta.\n"
+      read -p "Deseja tornar dono desta pasta um grupo diferente? (S)im ou (N)ão? [N] " opcao
+      if [ $opcao == "S"] ;
+        then
+          unset grupo
+          read -p "Digite o nome do grupo que deseja tornar dono desta pasta: " grupo
+          grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+          if [ $(getent group $grupo) ] ;
+            then
+              chgrp -R $grupo $pasta
+              echo -e "O grupo $grupo é o novo dona da pasta $nomepasta.\n"
+              read -p "Tecle <Enter> para continuar..."
+            else
+              groupadd $grupo
+              momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+              echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso!" >> $log
+              echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso! \n"
+              read -p "Tecle <Enter> para continuar..."
+          fi
+        else
+          echo "Retornando para o menu..."
+          sleep 1
+      fi
+    else
+      echo -e "Este usuário $nome NÃO existe."
+      unset opcao
+      read -p "Deseja criar? (S)im ou (N)ão? [N] " opcao
+      case $opcao in
+        n|N|"") echo "Retornando para o menu..."
+          sleep 1
+          break ;;
+        s|S) cria_usuario ;;
         *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
   fi
 }
 
-altera_permissao() {
-  #teste Se usuario nao existir, perguntar se deseja criar
-  if [ $1 -eq 0 ] ;
+menu_altera_permissao() {
+  if [ $1 -eq 1 ] ;
     then
-      read -p "Qual pasta deseja alterar a permisão? "
+      unset opcao
+      read -p "Deseja mesmo alterar as permissões da pasta $nomepasta? (S)im ou (N)ão? [N] " opcao
+      case $opcao in
+        n|N|"") echo "Retornando para o menu..."
+          sleep 1
+          break ;;
+        s|S) altera_permissao ;;
+        *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+          read -p "Tecle <Enter> para retornar ao menu." ;;
+      esac
+    else
+      read -p "Qual pasta deseja alterar a permisão? " nomepasta
       nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g')
       pasta="$raiz$nomepasta"
       if [ -d $pasta ] ;
         then
-          echo "Alterar permissoes"
+          altera_permissao
         else
-          echo "Pasta não existe. Deseja criar?"
+          unset opcao
+          read -p "Esta pasta não existe. Deseja criá-la? (S)im ou (N)ão? [N] " opcao
+          case $opcao in
+            n|N|"") echo "Retornando para o menu..."
+              sleep 1
+              break ;;
+            s|S) cria_pasta 2 ;;
+            *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+            read -p "Tecle <Enter> para retornar ao menu." ;;
+          esac
       fi
-    else
-      echo -e "Deseja alterar permissões da ultima pasta criada?\nPasta: \e[32;1;1m$nomepasta\e[m "
-      read -p "Tecle <Enter> para retornar ao menu."
   fi
 }
 
@@ -101,9 +190,9 @@ remove_usuario() {
 cria_grupo() {
   clear
   unset grupo
-  read -p "Digite um nome para o novo usuário: " grupo
+  read -p "Digite um nome para o novo grupo: " grupo
   grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
-  if [ $(getent passwd $grupo) ] ;
+  if [ $(getent group $grupo) ] ;
     then
       echo -e "O grupo $grupo já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
@@ -178,7 +267,7 @@ if [ $? -ne "0" ];
       read -p "> " opcao_menu
       case $opcao_menu in
         1) cria_pasta ;;
-        2) altera_permissao ;;
+        2) menu_altera_permissao ;;
         3) cria_usuario ;;
         4) cria_grupo ;;
         5) adiciona_a_grupo ;;
