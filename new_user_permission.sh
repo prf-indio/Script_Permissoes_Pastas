@@ -7,7 +7,7 @@ listausuarios="/var/local/usuarios.txt"
 admin="administrador"
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 lasthost=`last -i -n 1 | awk 'FNR==1{print $3}'`
-echo -e "$momento - Script iniciado pelo host \e[32;1;1m$lasthost\e[m." >> $log
+echo -e "\n$momento - Script iniciado pelo host \e[32;1;1m$lasthost\e[m." >> $log
 
 #Pensar no seguinte fluxo:
 #  Criar usuário apenas para ter o acesso via samba;
@@ -22,8 +22,8 @@ cria_pasta() {
       unset opcao
       mkdir $pasta
       chmod -R 770 $pasta
-      chown -R $admin
-      chgrp -R $admin
+      chown -R $admin $pasta
+      chgrp -R $admin $pasta
       echo -e "$momento - A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
       echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
       read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
@@ -57,6 +57,8 @@ cria_pasta() {
           unset opcao
           mkdir $pasta
           chmod -R 770 $pasta
+          chown -R $admin $pasta
+          chgrp -R $admin $pasta
           echo -e "$momento - A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
           echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
           read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
@@ -264,8 +266,10 @@ adiciona_a_grupo() {
   clear
   cat $listagrupos
   read -p "Qual grupo? " grupo
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
   cat $listausuarios
   read -p "Qual usuário? " usuario
+  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g')
   gpasswd -a $usuario $grupo
   read -p "Tecle <Enter> para retornar ao menu."
 }
@@ -274,8 +278,10 @@ remove_de_grupo() {
   clear
   cat $listagrupos
   read -p "Qual grupo? " grupo
-  #verificar e listar usuarios deste grupo específico - provavelmente usar sed ou/e awk
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+  getent group $grupo | cut -d: -f4 | tr ',' '\n'
   read -p "Qual usuario? " usuario
+  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g')
   gpasswd -d $usuario $grupo
   read -p "Tecle <Enter> para retornar ao menu."
 }
@@ -335,5 +341,5 @@ if [ $? -ne "0" ];
 fi
 
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-echo -e "$momento - Script encerrado. \n-------------------\n" >> $log
+echo -e "$momento - Script encerrado. \n-------------------" >> $log
 echo -e "$momento - \e[32;1;1mScript encerrado.\e[m \n"
