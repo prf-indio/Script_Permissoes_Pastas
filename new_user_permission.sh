@@ -20,7 +20,7 @@ cria_pasta() {
   if [ $1 -eq 2 ] ;
     then
       unset opcao
-      mkdir $pasta
+      mkdir "$pasta"
       chmod -R 770 $pasta
       chown -R $admin $pasta
       chgrp -R $admin $pasta
@@ -38,8 +38,8 @@ cria_pasta() {
     else
       unset nomepasta
       read -p "Qual o nome da pasta que deseja criar? " nomepasta
-      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g')
-      pasta="$raiz$nomepasta"
+      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g' | sed 's/ /\_/g')
+      pasta=$raiz$nomepasta
       if [ -d $pasta ] ;
         then
           unset opcao
@@ -78,7 +78,7 @@ altera_permissao() {
   clear
   unset grupo
   read -p "Qual grupo deve ser dono desta pasta? Digite o nome: " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   if [ $(getent group $grupo) ] ;
     then
       chgrp -R $grupo $pasta
@@ -91,7 +91,7 @@ altera_permissao() {
         s|S)
           unset nome
           read -p "Digite o nome do usuário que deseja tornar dono desta pasta: " usuario
-          nome=$(echo $usuario | sed -r 's/(.*)/\L\1/g')
+          nome=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
           if [ $(getent passwd $usuario) ] ;
             then
               chown -R $usuario $pasta
@@ -152,7 +152,7 @@ menu_altera_permissao() {
       esac
     else
       read -p "Qual pasta deseja alterar a permisão? " nomepasta
-      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g')
+      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g' | sed 's/ /\_/g')
       pasta="$raiz$nomepasta"
       if [ -d $pasta ] ;
         then
@@ -176,7 +176,7 @@ cria_usuario() {
   clear
   unset usuario
   read -p "Digite um nome para o novo usuário: " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g')
+  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   if [ $(getent passwd $usuario) ] ;
     then
       echo -e "O usuário $usuario já existe, tente outro nome.\n"
@@ -201,7 +201,7 @@ remove_usuario() {
   clear
   unset usuario
   read -p "Digite o nome do usuário a ser removido: " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g')
+  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   smbpasswd -x $usuario
     if [ $? -eq 0 ] ;
     then
@@ -223,7 +223,7 @@ cria_grupo() {
   clear
   unset grupo
   read -p "Digite um nome para o novo grupo: " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   if [ $(getent group $grupo) ] ;
     then
       echo -e "O grupo $grupo já existe, tente outro nome.\n"
@@ -245,7 +245,7 @@ remove_grupo() {
   clear
   unset grupo
   read -p "Digite o nome do grupo a ser excluído: " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   groupdel $grupo
   if [ $? -eq 0 ] ;
     then
@@ -266,10 +266,10 @@ adiciona_a_grupo() {
   clear
   cat $listagrupos
   read -p "Qual grupo? " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   cat $listausuarios
   read -p "Qual usuário? " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g')
+  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   gpasswd -a $usuario $grupo
   read -p "Tecle <Enter> para retornar ao menu."
 }
@@ -278,10 +278,10 @@ remove_de_grupo() {
   clear
   cat $listagrupos
   read -p "Qual grupo? " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g')
+  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   getent group $grupo | cut -d: -f4 | tr ',' '\n'
   read -p "Qual usuario? " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g')
+  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   gpasswd -d $usuario $grupo
   read -p "Tecle <Enter> para retornar ao menu."
 }
