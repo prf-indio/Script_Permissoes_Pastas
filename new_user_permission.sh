@@ -2,6 +2,8 @@
 ### Patrick R. Faria - GTI ###
 log="/var/log/new_user.log"
 raiz="/home/gti/compartilhamentos/"
+listagrupos="/var/local/grupos.txt"
+listausuarios="/var/local/usuarios.txt"
 admin="administrador"
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 lasthost=`last -i -n 1 | awk 'FNR==1{print $3}'`
@@ -181,11 +183,11 @@ cria_usuario() {
       #adduser --disabled-login --disabled-password --no-create-home --shell /usr/sbin/nologin --quiet $nome
       adduser --system --no-create-home --quiet $usuario
       #talvez criar aqui, uma testagem para só continuar se o comando der certo
-      sleep 1
       echo -e "\e[32;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
       smbpasswd -a $usuario
       clear
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+      echo "$usuario" >> $listausuarios
       echo -e "$momento - O usuário \e[32;1;1m$usuario\e[m foi criado com sucesso!" >> $log
       echo -e "O usuário \e[32;1;1m$usuario\e[m foi criado com sucesso! \n"
       read -p "Tecle <Enter> para continuar..."
@@ -204,6 +206,7 @@ remove_usuario() {
       deluser $usuario
       clear
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+      sed -i "/$usuario/d" $listausuarios
       echo -e "$momento - Usuário \e[32;1;1m$usuario\e[m removido." >> $log
       echo -e "Usuário \e[32;1;1m$usuario\e[m removido completamente. \n"
       read -p "Tecle <Enter> para continuar..."
@@ -226,6 +229,7 @@ cria_grupo() {
     else
       groupadd $grupo
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+      echo "$grupo" >> $listagrupos
       echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso!" >> $log
       echo -e "O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso! \n"
       read -p "Tecle <Enter> para continuar..."
@@ -244,6 +248,8 @@ remove_grupo() {
   if [ $? -eq 0 ] ;
     then
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+      sed -i "/$grupo/d" $listagrupos
+      #sed '/^$/d' $listagrupos sed '/./!d'
       echo -e "$momento - Grupo \e[32;1;1m$grupo\e[m removido." >> $log
       echo -e "Grupo \e[32;1;1m$grupo\e[m removido. \n"
       read -p "Tecle <Enter> para continuar..."
@@ -255,17 +261,24 @@ remove_grupo() {
 }
 
 adiciona_a_grupo() {
-  usermod -aG $grupo $usuario
-  return 0
+  clear
+  cat $listagrupos
+  read -p "Qual grupo? " grupo
+  cat $listausuarios
+  read -p "Qual usuário? " usuario
+  gpasswd -a $usuario $grupo
+  read -p "Tecle <Enter> para retornar ao menu."
 }
 
 remove_de_grupo() {
-  return 0
+  clear
+  cat $listagrupos
+  read -p "Qual grupo? " grupo
+  #verificar e listar usuarios deste grupo específico - provavelmente usar sed ou/e awk
+  read -p "Qual usuario? " usuario
+  gpasswd -d $usuario $grupo
+  read -p "Tecle <Enter> para retornar ao menu."
 }
-
-#Criar funções
-#listar grupos
-#listar usuarios
 
 menu_inicial() {
     clear
