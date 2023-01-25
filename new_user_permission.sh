@@ -7,7 +7,6 @@ listausuarios="/var/local/usuarios.txt"
 admin="administrador"
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 lasthost=`last -i -n 1 | awk 'FNR==1{print $3}'`
-echo -e "\n$momento - Script iniciado pelo host \e[34;1;1m$lasthost\e[m." >> $log
 
 cria_pasta() {
   clear
@@ -76,6 +75,7 @@ altera_permissao() {
   if [ $(getent group "$grupo") ] ;
     then
       chgrp -R "$grupo" "$pasta"
+      #adicionar checagem de erro do comando anterior
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O grupo \e[34;1;1m$grupo\e[m é o novo dono." >> $log
       echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
@@ -89,6 +89,7 @@ altera_permissao() {
           if [ $(getent passwd "$usuario") ] ;
             then
               chown -R "$usuario" "$pasta"
+              #adicionar checagem de erro do comando anterior
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
               echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O usuário \e[34;1;1m$usuario\e[m é o novo dono." >> $log
               echo -e "O usuário $usuario é o novo dono da pasta $nomepasta.\n"
@@ -201,14 +202,12 @@ remove_usuario() {
       smbpasswd -x "$usuario"
       if [ $? -ne "0" ];
         then
-          echo "Algum erro ocorreu."
-          read
+          read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
         else
           deluser "$usuario"
           if [ $? -ne "0" ];
             then
-              echo "Algum erro ocorreu."
-              read
+              read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
             else
               clear
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
@@ -220,7 +219,7 @@ remove_usuario() {
         fi
     else
       clear
-      echo -e "O usuário $usuario não existe ou não é um usuário válido para remover!\n"
+      echo -e "O usuário \e[34;1;1m$usuario\e[m não existe ou não é um usuário válido para remover!\n"
       read -p "Tecle <Enter> para retornar ao menu."
   fi
 }
@@ -236,6 +235,7 @@ cria_grupo() {
       read -p "Tecle <Enter> para retornar ao menu."
     else
       groupadd "$grupo"
+      #adicionar checagem de erro do comando anterior
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$grupo" >> $listagrupos
       echo -e "$momento - O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso!" >> $log
@@ -259,8 +259,7 @@ remove_grupo() {
       groupdel -f "$grupo"
       if [ $? -ne "0" ];
         then
-          echo "Algum erro ocorreu."
-          read
+          read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
         else
           momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
           sed -i "/$grupo/d" $listagrupos
@@ -290,9 +289,10 @@ adiciona_a_grupo() {
   usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   #check se usuario está na lista
   gpasswd -a "$usuario" "$grupo"
+  #adicionar checagem de erro do comando anterior
   sleep 1
   echo -e "Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!"
-  echo -e "Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!" >> $log
+  echo -e "$momento - Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!" >> $log
   read -p "Tecle <Enter> para retornar ao menu."
 }
 
@@ -311,6 +311,7 @@ remove_de_grupo() {
   usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   #check se usuario está no grupo
   gpasswd -d "$usuario" "$grupo"
+  #adicionar checagem de erro do comando anterior
   sleep 1
   echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!"
   echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!" >> $log
@@ -339,6 +340,13 @@ verifica_SU() {
   return $USER_ID
 }
 
+if [ "$1" == "--log" ] ;
+  then
+    cat $log
+    exit 1
+fi
+
+echo -e "\n$momento - Script iniciado pelo host \e[34;1;1m$lasthost\e[m." >> $log
 verifica_SU
 if [ $? -ne "0" ];
   then
