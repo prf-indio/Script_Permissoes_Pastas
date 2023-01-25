@@ -9,21 +9,15 @@ momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 lasthost=`last -i -n 1 | awk 'FNR==1{print $3}'`
 echo -e "\n$momento - Script iniciado pelo host \e[32;1;1m$lasthost\e[m." >> $log
 
-#Pensar no seguinte fluxo:
-#  Criar usuário apenas para ter o acesso via samba;
-#  Alterar permissões de pasta apenas para Grupos;
-#  Permissões padrão deverão ser -R 770 e o usuário administrador como dono de todas as pastas;
-#  Para um usuário ter acesso a uma pasta, ele apenas deverá ser incluído no grupo dono da pasta.
-
 cria_pasta() {
   clear
   if [ $1 -eq 2 ] ;
     then
       unset opcao
       mkdir "$pasta"
-      chmod -R 770 $pasta
-      chown -R $admin $pasta
-      chgrp -R $admin $pasta
+      chmod -R 770 "$pasta"
+      chown -R "$admin" "$pasta"
+      chgrp -R "$admin" "$pasta"
       echo -e "$momento - A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
       echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
       read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
@@ -38,9 +32,9 @@ cria_pasta() {
     else
       unset nomepasta
       read -p "Qual o nome da pasta que deseja criar? " nomepasta
-      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g' | sed 's/ /\_/g')
-      pasta=$raiz$nomepasta
-      if [ -d $pasta ] ;
+      nomepasta=$(echo "$nomepasta" | sed -r 's/(.*)/\U\1/g')
+      pasta="$raiz$nomepasta"
+      if [ -d "$pasta" ] ;
         then
           unset opcao
           echo "A pasta $nomepasta já existe! Verifique se o nome digitado está correto."
@@ -55,10 +49,10 @@ cria_pasta() {
           esac
         else
           unset opcao
-          mkdir $pasta
-          chmod -R 770 $pasta
-          chown -R $admin $pasta
-          chgrp -R $admin $pasta
+          mkdir "$pasta"
+          chmod -R 770 "$pasta"
+          chown -R "$admin" "$pasta"
+          chgrp -R "$admin" "$pasta"
           echo -e "$momento - A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
           echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
           read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
@@ -78,10 +72,10 @@ altera_permissao() {
   clear
   unset grupo
   read -p "Qual grupo deve ser dono desta pasta? Digite o nome: " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  if [ $(getent group $grupo) ] ;
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  if [ $(getent group "$grupo") ] ;
     then
-      chgrp -R $grupo $pasta
+      chgrp -R "$grupo" "$pasta"
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo -e "$momento - Permissão da pasta \e[32;1;1m$nomepasta\e[m alterada. O grupo \e[32;1;1m$grupo\e[m é o novo dono." >> $log
       echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
@@ -89,12 +83,12 @@ altera_permissao() {
       read -p "Deseja também tornar um Usuário específico dono desta pasta? (S)im ou (N)ão? [N] " opcao
       case $opcao in
         s|S)
-          unset nome
+          unset usuario
           read -p "Digite o nome do usuário que deseja tornar dono desta pasta: " usuario
-          nome=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-          if [ $(getent passwd $usuario) ] ;
+          usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+          if [ $(getent passwd "$usuario") ] ;
             then
-              chown -R $usuario $pasta
+              chown -R "$usuario" "$pasta"
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
               echo -e "$momento - Permissão da pasta \e[32;1;1m$nomepasta\e[m alterada. O usuário \e[32;1;1m$usuario\e[m é o novo dono." >> $log
               echo -e "O usuário $usuario é o novo dono da pasta $nomepasta.\n"
@@ -152,9 +146,9 @@ menu_altera_permissao() {
       esac
     else
       read -p "Qual pasta deseja alterar a permisão? " nomepasta
-      nomepasta=$(echo $nomepasta | sed -r 's/(.*)/\U\1/g' | sed 's/ /\_/g')
+      nomepasta=$(echo "$nomepasta" | sed -r 's/(.*)/\U\1/g')
       pasta="$raiz$nomepasta"
-      if [ -d $pasta ] ;
+      if [ -d "$pasta" ] ;
         then
           altera_permissao
         else
@@ -176,17 +170,17 @@ cria_usuario() {
   clear
   unset usuario
   read -p "Digite um nome para o novo usuário: " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  if [ $(getent passwd $usuario) ] ;
+  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  if [ $(getent passwd "$usuario") ] ;
     then
       echo -e "O usuário $usuario já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
       #adduser --disabled-login --disabled-password --no-create-home --shell /usr/sbin/nologin --quiet $nome
-      adduser --system --no-create-home --quiet $usuario
+      adduser --system --no-create-home --quiet "$usuario"
       #talvez criar aqui, uma testagem para só continuar se o comando der certo
       echo -e "\e[32;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
-      smbpasswd -a $usuario
+      smbpasswd -a "$usuario"
       clear
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$usuario" >> $listausuarios
@@ -201,11 +195,12 @@ remove_usuario() {
   clear
   unset usuario
   read -p "Digite o nome do usuário a ser removido: " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  smbpasswd -x $usuario
-    if [ $? -eq 0 ] ;
+  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  #verificar se usuario digitado não está na lista de bloqueados
+  smbpasswd -x "$usuario"
+  if [ $? -eq 0 ] ;
     then
-      deluser $usuario
+      deluser "$usuario"
       clear
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       sed -i "/$usuario/d" $listausuarios
@@ -223,13 +218,13 @@ cria_grupo() {
   clear
   unset grupo
   read -p "Digite um nome para o novo grupo: " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  if [ $(getent group $grupo) ] ;
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  if [ $(getent group "$grupo") ] ;
     then
       echo -e "O grupo $grupo já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
-      groupadd $grupo
+      groupadd "$grupo"
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$grupo" >> $listagrupos
       echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso!" >> $log
@@ -245,8 +240,8 @@ remove_grupo() {
   clear
   unset grupo
   read -p "Digite o nome do grupo a ser excluído: " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  groupdel $grupo
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  groupdel "$grupo"
   if [ $? -eq 0 ] ;
     then
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
@@ -266,11 +261,11 @@ adiciona_a_grupo() {
   clear
   cat $listagrupos
   read -p "Qual grupo? " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   cat $listausuarios
   read -p "Qual usuário? " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  gpasswd -a $usuario $grupo
+  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  gpasswd -a "$usuario" "$grupo"
   read -p "Tecle <Enter> para retornar ao menu."
 }
 
@@ -278,11 +273,11 @@ remove_de_grupo() {
   clear
   cat $listagrupos
   read -p "Qual grupo? " grupo
-  grupo=$(echo $grupo | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  getent group $grupo | cut -d: -f4 | tr ',' '\n'
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  getent group "$grupo" | cut -d: -f4 | tr ',' '\n'
   read -p "Qual usuario? " usuario
-  usuario=$(echo $usuario | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  gpasswd -d $usuario $grupo
+  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  gpasswd -d "$usuario" "$grupo"
   read -p "Tecle <Enter> para retornar ao menu."
 }
 
