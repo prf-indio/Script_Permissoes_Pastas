@@ -7,7 +7,7 @@ listausuarios="/var/local/usuarios.txt"
 admin="administrador"
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 lasthost=`last -i -n 1 | awk 'FNR==1{print $3}'`
-echo -e "\n$momento - Script iniciado pelo host \e[32;1;1m$lasthost\e[m." >> $log
+echo -e "\n$momento - Script iniciado pelo host \e[34;1;1m$lasthost\e[m." >> $log
 
 cria_pasta() {
   clear
@@ -19,7 +19,7 @@ cria_pasta() {
       chown -R "$admin" "$pasta"
       chgrp -R "$admin" "$pasta"
       echo -e "$momento - A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
-      echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
+      echo -e "A pasta \e[34;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
       read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
       case $opcao in
         n|N|"") echo "Retornando para o menu..."
@@ -53,8 +53,8 @@ cria_pasta() {
           chmod -R 770 "$pasta"
           chown -R "$admin" "$pasta"
           chgrp -R "$admin" "$pasta"
-          echo -e "$momento - A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
-          echo -e "A pasta \e[32;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
+          echo -e "$momento - A pasta \e[34;1;1m$nomepasta\e[m foi criada em $raiz com sucesso!" >> $log
+          echo -e "A pasta \e[34;1;1m$nomepasta\e[m foi criada em $raiz com sucesso! \n"
           read -p "Deseja tornar um grupo dono desta pasta? (S)im ou (N)ão? [N] " opcao
           case $opcao in
             n|N|"") echo "Retornando para o menu..."
@@ -77,7 +77,7 @@ altera_permissao() {
     then
       chgrp -R "$grupo" "$pasta"
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-      echo -e "$momento - Permissão da pasta \e[32;1;1m$nomepasta\e[m alterada. O grupo \e[32;1;1m$grupo\e[m é o novo dono." >> $log
+      echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O grupo \e[34;1;1m$grupo\e[m é o novo dono." >> $log
       echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
       unset opcao
       read -p "Deseja também tornar um Usuário específico dono desta pasta? (S)im ou (N)ão? [N] " opcao
@@ -90,7 +90,7 @@ altera_permissao() {
             then
               chown -R "$usuario" "$pasta"
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-              echo -e "$momento - Permissão da pasta \e[32;1;1m$nomepasta\e[m alterada. O usuário \e[32;1;1m$usuario\e[m é o novo dono." >> $log
+              echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O usuário \e[34;1;1m$usuario\e[m é o novo dono." >> $log
               echo -e "O usuário $usuario é o novo dono da pasta $nomepasta.\n"
               read -p "Tecle <Enter> para continuar..."
             else
@@ -179,13 +179,13 @@ cria_usuario() {
       #adduser --disabled-login --disabled-password --no-create-home --shell /usr/sbin/nologin --quiet $nome
       adduser --system --no-create-home --quiet "$usuario"
       #talvez criar aqui, uma testagem para só continuar se o comando der certo
-      echo -e "\e[32;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
+      echo -e "\e[34;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
       smbpasswd -a "$usuario"
       clear
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$usuario" >> $listausuarios
-      echo -e "$momento - O usuário \e[32;1;1m$usuario\e[m foi criado com sucesso!" >> $log
-      echo -e "O usuário \e[32;1;1m$usuario\e[m foi criado com sucesso! \n"
+      echo -e "$momento - O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso!" >> $log
+      echo -e "O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso! \n"
       read -p "Tecle <Enter> para continuar..."
       #perguntar se deseja criar grupo com mesmo nome
   fi
@@ -196,27 +196,28 @@ remove_usuario() {
   unset usuario
   read -p "Digite o nome do usuário a ser removido: " usuario
   usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  #verificar se usuario digitado não está na lista de bloqueados
-  if [ $(getent passwd "$usuario") ] ;
+  if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "$admin" ] ;
     then
-      for i in $(cat $listausuarios)
-        do
-          if [[ "$usuario" == "$i" && "$usuario" != "$admin" ]] ;
+      smbpasswd -x "$usuario"
+      if [ $? -ne "0" ];
+        then
+          echo "Algum erro ocorreu."
+          read
+        else
+          deluser "$usuario"
+          if [ $? -ne "0" ];
             then
-              smbpasswd -x "$usuario"
-              deluser "$usuario"
+              echo "Algum erro ocorreu."
+              read
+            else
               clear
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
               sed -i "/$usuario/d" $listausuarios
-              echo -e "$momento - Usuário \e[32;1;1m$usuario\e[m removido." >> $log
-              echo -e "Usuário \e[32;1;1m$usuario\e[m removido completamente. \n"
+              echo -e "$momento - Usuário \e[34;1;1m$usuario\e[m removido." >> $log
+              echo -e "Usuário \e[34;1;1m$usuario\e[m removido completamente. \n"
               read -p "Tecle <Enter> para continuar..."
-            else
-              echo -e "\e[0;41;1mUsuário não permitido!\e[m"
-              read -p "Tecle <Enter> para continuar..."
-              break
           fi
-      done
+        fi
     else
       clear
       echo -e "O usuário $usuario não existe ou não é um usuário válido para remover!\n"
@@ -237,8 +238,8 @@ cria_grupo() {
       groupadd "$grupo"
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$grupo" >> $listagrupos
-      echo -e "$momento - O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso!" >> $log
-      echo -e "O grupo \e[32;1;1m$grupo\e[m foi criado com sucesso! \n"
+      echo -e "$momento - O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso!" >> $log
+      echo -e "O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! \n"
       read -p "Tecle <Enter> para continuar..."
       #Deseja inserir algum usuario a este grupo?
   fi
@@ -248,64 +249,89 @@ cria_grupo() {
 
 remove_grupo() {
   clear
-  unset grupo
+  echo -e "\e[34;1;1m- - - - -\e[m"
+  cat $listagrupos
+  echo -e "\e[34;1;1m- - - - -\e[m \n"
   read -p "Digite o nome do grupo a ser excluído: " grupo
   grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  groupdel "$grupo"
-  if [ $? -eq 0 ] ;
+  if grep -q "$grupo" "$listagrupos" && [ "$grupo" != "$admin" ] ;
     then
-      momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-      sed -i "/$grupo/d" $listagrupos
-      #sed '/^$/d' $listagrupos sed '/./!d'
-      echo -e "$momento - Grupo \e[32;1;1m$grupo\e[m removido." >> $log
-      echo -e "Grupo \e[32;1;1m$grupo\e[m removido. \n"
-      read -p "Tecle <Enter> para continuar..."
+      groupdel -f "$grupo"
+      if [ $? -ne "0" ];
+        then
+          echo "Algum erro ocorreu."
+          read
+        else
+          momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+          sed -i "/$grupo/d" $listagrupos
+          echo -e "$momento - Grupo \e[34;1;1m$grupo\e[m removido." >> $log
+          echo -e "Grupo \e[34;1;1m$grupo\e[m removido. \n"
+          read -p "Tecle <Enter> para continuar..."
+      fi
     else
       clear
-      echo -e "O grupo $grupo não existe!\n"
+      echo -e "O grupo $grupo não existe ou não é um grupo válido para remover!\n"
       read -p "Tecle <Enter> para retornar ao menu."
   fi
 }
 
 adiciona_a_grupo() {
   clear
+  echo -e "\e[34;1;1m- - - - -\e[m"
   cat $listagrupos
-  read -p "Qual grupo? " grupo
+  echo -e "\e[34;1;1m- - - - -\e[m \n"
+  read -p "Em qual grupo você deseja adicionar o usuário? Digite o nome: " grupo
   grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  #check se grupo está na lista
+  echo -e "\e[34;1;1m- - - - -\e[m"
   cat $listausuarios
-  read -p "Qual usuário? " usuario
+  echo -e "\e[34;1;1m- - - - -\e[m \n"
+  read -p "Qual usuário você deseja adicionar ao grupo $grupo? Digite o nome: " usuario
   usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  #check se usuario está na lista
   gpasswd -a "$usuario" "$grupo"
+  sleep 1
+  echo -e "Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!"
+  echo -e "Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!" >> $log
   read -p "Tecle <Enter> para retornar ao menu."
 }
 
 remove_de_grupo() {
   clear
+  echo -e "\e[34;1;1m- - - - -\e[m"
   cat $listagrupos
-  read -p "Qual grupo? " grupo
+  echo -e "\e[34;1;1m- - - - -\e[m \n"
+  read -p "De qual grupo você deseja remover o usuário? Digite o nome: " grupo
   grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  #check se grupo está na lista
+  echo -e "\e[34;1;1m- - - - -\e[m"
   getent group "$grupo" | cut -d: -f4 | tr ',' '\n'
-  read -p "Qual usuario? " usuario
+  echo -e "\e[34;1;1m- - - - -\e[m \n"
+  read -p "Qual usuário você deseja remover do grupo $grupo? Digite o nome: " usuario
   usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  #check se usuario está no grupo
   gpasswd -d "$usuario" "$grupo"
+  sleep 1
+  echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!"
+  echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!" >> $log
   read -p "Tecle <Enter> para retornar ao menu."
 }
 
 menu_inicial() {
     clear
-    echo -e "\e[32;1;1m##### ##### ##### ##### ##### ##### #####\n > Informe o número da opção desejada:\e[m"
-    echo -e "\e[32;1;1m1 \e[m- Criar pasta de rede"
-    echo -e "\e[32;1;1m2 \e[m- Alterar permissão de pasta"
-    echo -e "\e[32;1;1m3 \e[m- Criar usuário"
-    echo -e "\e[32;1;1m4 \e[m- Criar grupo"
-    echo -e "\e[32;1;1m5 \e[m- Adicionar usuário a um grupo"
-    echo -e "\e[32;1;1m6 \e[m- Remover usuário de um grupo"
-    echo -e "\e[32;1;1m- - - - -\e[m"
-    echo -e "\e[32;1;1m99 \e[m- Remover usuário"
-    echo -e "\e[32;1;1m00 \e[m- Remover grupo"
-    echo -e "\e[32;1;1m- - - - -\e[m"
-    echo -e "\e[32;1;1mexit \e[m- Sair"
-    echo -e "\e[32;1;1m##### ##### ##### ##### ##### ##### #####\e[m \n"
+    echo -e "\e[34;1;1m##### ##### ##### ##### ##### ##### #####\n > Informe o número da opção desejada:\e[m"
+    echo -e "\e[34;1;1m1 \e[m- Criar pasta de rede"
+    echo -e "\e[34;1;1m2 \e[m- Alterar permissão de pasta"
+    echo -e "\e[34;1;1m3 \e[m- Criar usuário"
+    echo -e "\e[34;1;1m4 \e[m- Criar grupo"
+    echo -e "\e[34;1;1m5 \e[m- Adicionar usuário a um grupo"
+    echo -e "\e[34;1;1m6 \e[m- Remover usuário de um grupo"
+    echo -e "\e[34;1;1m- - - - -\e[m"
+    echo -e "\e[34;1;1m99 \e[m- Remover usuário"
+    echo -e "\e[34;1;1m00 \e[m- Remover grupo"
+    echo -e "\e[34;1;1m- - - - -\e[m"
+    echo -e "\e[34;1;1mexit \e[m- Sair"
+    echo -e "\e[34;1;1m##### ##### ##### ##### ##### ##### #####\e[m \n"
 }
 
 verifica_SU() {
@@ -317,7 +343,7 @@ verifica_SU
 if [ $? -ne "0" ];
   then
     clear
-    echo -e "\e[32;41;1mVocê não tem permissões de Super-usuário! Tente executar este script como root.\e[m \n"
+    echo -e "\e[0;41;1mVocê não tem permissões de Super-usuário! Tente executar este script novamente como root.\e[m \n"
     exit 1
   else
     menu_inicial
@@ -338,7 +364,7 @@ if [ $? -ne "0" ];
           sleep 1
           clear
           break ;;
-        *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
       menu_inicial
@@ -347,4 +373,4 @@ fi
 
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 echo -e "$momento - Script encerrado. \n-------------------" >> $log
-echo -e "$momento - \e[32;1;1mScript encerrado.\e[m \n"
+echo -e "$momento - \e[34;1;1mScript encerrado.\e[m \n"
