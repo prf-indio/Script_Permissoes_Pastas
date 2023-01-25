@@ -26,7 +26,7 @@ cria_pasta() {
           sleep 1
           break ;;
         s|S) menu_altera_permissao 1 ;;
-        *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
     else
@@ -44,7 +44,7 @@ cria_pasta() {
               sleep 1
               break ;;
             s|S) menu_altera_permissao 1 ;;
-            *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+            *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
               read -p "Tecle <Enter> para retornar ao menu." ;;
           esac
         else
@@ -61,7 +61,7 @@ cria_pasta() {
               sleep 1
               break ;;
             s|S) menu_altera_permissao 1 ;;
-            *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+            *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
               read -p "Tecle <Enter> para retornar ao menu." ;;
           esac
       fi
@@ -102,7 +102,7 @@ altera_permissao() {
                   sleep 1
                   break ;;
                 s|S) cria_usuario ;;
-                *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+                *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
                 read -p "Tecle <Enter> para retornar ao menu." ;;
               esac
           fi
@@ -112,7 +112,7 @@ altera_permissao() {
           sleep 2
           ;;
         *)
-          echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+          echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu."
           ;;
         esac
@@ -125,7 +125,7 @@ altera_permissao() {
           sleep 1
           break ;;
         s|S) cria_grupo ;;
-        *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
   fi
@@ -141,7 +141,7 @@ menu_altera_permissao() {
           sleep 1
           break ;;
         s|S) altera_permissao ;;
-        *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
     else
@@ -159,7 +159,7 @@ menu_altera_permissao() {
               sleep 1
               break ;;
             s|S) cria_pasta 2 ;;
-            *) echo -e "\e[32;41;1mOpção incorreta!\e[m \n" 
+            *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
             read -p "Tecle <Enter> para retornar ao menu." ;;
           esac
       fi
@@ -197,16 +197,26 @@ remove_usuario() {
   read -p "Digite o nome do usuário a ser removido: " usuario
   usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   #verificar se usuario digitado não está na lista de bloqueados
-  smbpasswd -x "$usuario"
-  if [ $? -eq 0 ] ;
+  if [ $(getent passwd "$usuario") ] ;
     then
-      deluser "$usuario"
-      clear
-      momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-      sed -i "/$usuario/d" $listausuarios
-      echo -e "$momento - Usuário \e[32;1;1m$usuario\e[m removido." >> $log
-      echo -e "Usuário \e[32;1;1m$usuario\e[m removido completamente. \n"
-      read -p "Tecle <Enter> para continuar..."
+      for i in $(cat $listausuarios)
+        do
+          if [[ "$usuario" == "$i" && "$usuario" != "$admin" ]] ;
+            then
+              smbpasswd -x "$usuario"
+              deluser "$usuario"
+              clear
+              momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+              sed -i "/$usuario/d" $listausuarios
+              echo -e "$momento - Usuário \e[32;1;1m$usuario\e[m removido." >> $log
+              echo -e "Usuário \e[32;1;1m$usuario\e[m removido completamente. \n"
+              read -p "Tecle <Enter> para continuar..."
+            else
+              echo -e "\e[0;41;1mUsuário não permitido!\e[m"
+              read -p "Tecle <Enter> para continuar..."
+              break
+          fi
+      done
     else
       clear
       echo -e "O usuário $usuario não existe ou não é um usuário válido para remover!\n"
