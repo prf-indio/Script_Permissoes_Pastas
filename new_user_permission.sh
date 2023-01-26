@@ -235,14 +235,18 @@ cria_grupo() {
       read -p "Tecle <Enter> para retornar ao menu."
     else
       groupadd "$grupo"
-      #adicionar checagem de erro do comando anterior
-      gpasswd -a "$admin" "$grupo"
-      momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-      echo "$grupo" >> $listagrupos
-      echo -e "$momento - O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! O usuário $admin foi adicionado automaticamente a este grupo." >> $log
-      echo -e "O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! \nO usuário $admin foi adicionado automaticamente a este grupo. \n"
-      read -p "Tecle <Enter> para continuar..."
-      #Deseja inserir algum usuario a este grupo?
+      if [ $? -ne "0" ];
+        then
+          read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+        else
+          gpasswd -a "$admin" "$grupo"
+          momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+          echo "$grupo" >> $listagrupos
+          echo -e "$momento - O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! O usuário $admin foi adicionado automaticamente a este grupo." >> $log
+          echo -e "O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! \nO usuário $admin foi adicionado automaticamente a este grupo. \n"
+          read -p "Tecle <Enter> para continuar..."
+          #Deseja inserir algum usuario a este grupo?
+      fi
   fi
   #perguntar se deseja criar usuário com mesmo nome
   #perguntar se quer alterar permissão de alguma pasta
