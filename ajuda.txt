@@ -1,0 +1,7 @@
+Script utilizado para a criação segura de pastas, usuários e grupos de acesso ao compartilhamento...
+
+Uso: ./novo_usuario_pasta.sh [Opção]
+
+Opção           Significado
+--log           Exibe o arquivo de LOG de funcionamento do script e sai
+-h              Mostra esse texto de ajuda e sai
