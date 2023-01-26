@@ -323,19 +323,34 @@ remove_de_grupo() {
   echo -e "\e[34;1;1m- - - - -\e[m \n"
   read -p "De qual grupo você deseja remover o usuário? Digite o nome: " grupo
   grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  #check se grupo está na lista
-  echo -e "\e[34;1;1m- - - - -\e[m"
-  getent group "$grupo" | cut -d: -f4 | tr ',' '\n'
-  echo -e "\e[34;1;1m- - - - -\e[m \n"
-  read -p "Qual usuário você deseja remover do grupo $grupo? Digite o nome: " usuario
-  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  #check se usuario está no grupo
-  gpasswd -d "$usuario" "$grupo"
-  #adicionar checagem de erro do comando anterior
-  sleep 1
-  echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!"
-  echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!" >> $log
-  read -p "Tecle <Enter> para retornar ao menu."
+  if grep -q "$grupo" "$listagrupos" ;
+    then
+      echo -e "\e[34;1;1m- - - - -\e[m"
+      getent group "$grupo" | cut -d: -f4 | tr ',' '\n'
+      echo -e "\e[34;1;1m- - - - -\e[m \n"
+      read -p "Qual usuário você deseja remover do grupo $grupo? Digite o nome: " usuario
+      usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+      if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "$admin" ] ;
+        then
+          gpasswd -d "$usuario" "$grupo"
+          if [ $? -ne "0" ];
+            then
+              read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+            else
+              echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!"
+              echo -e "Usuário \e[34;1;1m$usuario\e[m removido do grupo \e[34;1;1m$grupo\e[m!" >> $log
+              read -p "Tecle <Enter> para retornar ao menu."
+          fi
+        else
+          clear
+          echo -e "O usuário \e[34;1;1m$usuario\e[m não existe ou não é um usuário válido para remover do grupo.\n"
+          read -p "Tecle <Enter> para retornar ao menu."
+      fi
+    else
+      clear
+      echo -e "O grupo \e[34;1;1m$grupo\e[m não existe ou não é um grupo permitido alterar!\n"
+      read -p "Tecle <Enter> para retornar ao menu."
+  fi
 }
 
 menu_inicial() {
