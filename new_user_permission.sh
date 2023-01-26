@@ -379,6 +379,8 @@ if [ "$1" == "--log" ] ;
   then
     cat $log
     exit 1
+  elif [ "$1" == "" ] ; then
+    break
   else
     echo -e "\e[0;41;1mParametro inválido! Talvez você queira usar '--log'.\e[m \n"
     exit 1
