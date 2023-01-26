@@ -236,10 +236,11 @@ cria_grupo() {
     else
       groupadd "$grupo"
       #adicionar checagem de erro do comando anterior
+      gpasswd -a "$admin" "$grupo"
       momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
       echo "$grupo" >> $listagrupos
-      echo -e "$momento - O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso!" >> $log
-      echo -e "O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! \n"
+      echo -e "$momento - O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! O usuário $admin foi adicionado automaticamente a este grupo." >> $log
+      echo -e "O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! \nO usuário $admin foi adicionado automaticamente a este grupo. \n"
       read -p "Tecle <Enter> para continuar..."
       #Deseja inserir algum usuario a este grupo?
   fi
@@ -281,19 +282,34 @@ adiciona_a_grupo() {
   echo -e "\e[34;1;1m- - - - -\e[m \n"
   read -p "Em qual grupo você deseja adicionar o usuário? Digite o nome: " grupo
   grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  #check se grupo está na lista
-  echo -e "\e[34;1;1m- - - - -\e[m"
-  cat $listausuarios
-  echo -e "\e[34;1;1m- - - - -\e[m \n"
-  read -p "Qual usuário você deseja adicionar ao grupo $grupo? Digite o nome: " usuario
-  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-  #check se usuario está na lista
-  gpasswd -a "$usuario" "$grupo"
-  #adicionar checagem de erro do comando anterior
-  sleep 1
-  echo -e "Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!"
-  echo -e "$momento - Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!" >> $log
-  read -p "Tecle <Enter> para retornar ao menu."
+  if grep -q "$grupo" "$listagrupos" ;
+    then
+      echo -e "\e[34;1;1m- - - - -\e[m"
+      cat $listausuarios
+      echo -e "\e[34;1;1m- - - - -\e[m \n"
+      read -p "Qual usuário você deseja adicionar ao grupo $grupo? Digite o nome: " usuario
+      usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+      if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "$admin" ] ;
+        then
+          gpasswd -a "$usuario" "$grupo"
+          if [ $? -ne "0" ];
+            then
+              read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+            else
+              echo -e "Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!"
+              echo -e "$momento - Usuário \e[34;1;1m$usuario\e[m adicionado ao grupo \e[34;1;1m$grupo\e[m!" >> $log
+              read -p "Tecle <Enter> para retornar ao menu."
+          fi
+        else
+          clear
+          echo -e "O usuário \e[34;1;1m$usuario\e[m não existe ou não é um usuário válido para adicionar ao grupo.\n"
+          read -p "Tecle <Enter> para retornar ao menu."
+      fi
+    else
+      clear
+      echo -e "O grupo \e[34;1;1m$grupo\e[m não existe ou não é um grupo permitido alterar!\n"
+      read -p "Tecle <Enter> para retornar ao menu."
+  fi
 }
 
 remove_de_grupo() {
@@ -343,6 +359,9 @@ verifica_SU() {
 if [ "$1" == "--log" ] ;
   then
     cat $log
+    exit 1
+  else
+    echo -e "\e[0;41;1mParametro inválido! Talvez você queira usar '--log'.\e[m \n"
     exit 1
 fi
 
