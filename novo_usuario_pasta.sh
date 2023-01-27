@@ -70,54 +70,23 @@ cria_pasta() {
 
 altera_permissao() {
   clear
+  echo -e "\e[34;1;1m- - - - -\e[m"
+  cat $listagrupos
+  echo -e "\e[34;1;1m- - - - -\e[m \n"
   unset grupo
-  read -p "Qual grupo deve ser dono desta pasta? Digite o nome: " grupo
+  read -p "Qual grupo acima deve ser dono desta pasta? Digite o nome: " grupo
   grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
   if [ $(getent group "$grupo") ] ;
     then
       chgrp -R "$grupo" "$pasta"
-      #adicionar checagem de erro do comando anterior
-      momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-      echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O grupo \e[34;1;1m$grupo\e[m é o novo dono." >> $log
-      echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
-      unset opcao
-      read -p "Deseja também tornar um Usuário específico dono desta pasta? (S)im ou (N)ão? [N] " opcao
-      case $opcao in
-        s|S)
-          unset usuario
-          read -p "Digite o nome do usuário que deseja tornar dono desta pasta: " usuario
-          usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-          if [ $(getent passwd "$usuario") ] ;
-            then
-              chown -R "$usuario" "$pasta"
-              #adicionar checagem de erro do comando anterior
-              momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-              echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O usuário \e[34;1;1m$usuario\e[m é o novo dono." >> $log
-              echo -e "O usuário $usuario é o novo dono da pasta $nomepasta.\n"
-              read -p "Tecle <Enter> para continuar..."
-            else
-              echo "Este usuário não existe!"
-              unset opcao
-              read -p "Deseja criá-lo? (S)im ou (N)ão? [N] " opcao
-              case $opcao in
-                n|N|"") echo "Retornando para o menu..."
-                  sleep 1
-                  break ;;
-                s|S) cria_usuario ;;
-                *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
-                read -p "Tecle <Enter> para retornar ao menu." ;;
-              esac
-          fi
-            ;;
-        n|N|"")
-          echo "Retornando para o menu..."
-          sleep 2
-          ;;
-        *)
-          echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
-          read -p "Tecle <Enter> para retornar ao menu."
-          ;;
-        esac
+      if [ $? -ne "0" ];
+        then
+          read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+        else
+          momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+          echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O grupo \e[34;1;1m$grupo\e[m é o novo dono." >> $log
+          echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
+      fi
     else
       echo -e "Este grupo $grupo NÃO existe."
       unset opcao
@@ -169,18 +138,26 @@ cria_usuario() {
       echo -e "O usuário $usuario já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
-      #adduser --disabled-login --disabled-password --no-create-home --shell /usr/sbin/nologin --quiet $nome
       adduser --system --no-create-home --quiet "$usuario"
-      #talvez criar aqui, uma testagem para só continuar se o comando der certo
-      echo -e "\e[34;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
-      smbpasswd -a "$usuario"
-      clear
-      momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
-      echo "$usuario" >> $listausuarios
-      echo -e "$momento - O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso!" >> $log
-      echo -e "O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso! \n"
-      read -p "Tecle <Enter> para continuar..."
-      #perguntar se deseja criar grupo com mesmo nome
+      if [ $? -ne "0" ];
+        then
+          read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+        else
+          echo -e "\e[34;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
+          smbpasswd -a "$usuario"
+          if [ $? -ne "0" ];
+            then
+              read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+            else
+              clear
+              momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
+              echo "$usuario" >> $listausuarios
+              echo -e "$momento - O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso!" >> $log
+              echo -e "O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso! \n"
+              read -p "Tecle <Enter> para continuar..."
+              #perguntar se deseja criar grupo com mesmo nome
+          fi
+      fi
   fi
 }
 
@@ -382,7 +359,7 @@ if [ "$1" == "--log" ] ;
     echo -e "\n"
     exit 1
   else
-    echo -e "\e[0;41;1mParametro inválido! Talvez você queira usar '--log'.\e[m \n"
+    echo -e "\e[0;41;1mParametro inválido!\e[m Tente \e[1;33;1m-h\e[m para ajuda.\n"
     exit 1
 fi
 
