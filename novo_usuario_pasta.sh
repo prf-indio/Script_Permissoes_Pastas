@@ -140,7 +140,6 @@ cria_usuario() {
       read -p "Tecle <Enter> para retornar ao menu."
     else
       useradd --no-create-home --badnames -s /sbin/nologin "$usuario"
-      #adduser --system --no-create-home --force-badname --quiet "$usuario"
       if [ $? -ne "0" ];
         then
           read -p "Um erro ocorreu ao tentar criar o usuário no sistema. Tecle <Enter> para retornar ao menu."
