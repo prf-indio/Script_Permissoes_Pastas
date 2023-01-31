@@ -86,6 +86,7 @@ altera_permissao() {
           momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
           echo -e "$momento - Permissão da pasta \e[34;1;1m$nomepasta\e[m alterada. O grupo \e[34;1;1m$grupo\e[m é o novo dono." >> $log
           echo -e "O grupo $grupo é o novo dono da pasta $nomepasta.\n"
+          read -p "Tecle <Enter> para retornar ao menu."
       fi
     else
       echo -e "Este grupo $grupo NÃO existe."
@@ -132,22 +133,22 @@ cria_usuario() {
   clear
   unset usuario
   read -p "Digite um nome para o novo usuário: " usuario
-  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
   if [ $(getent passwd "$usuario") ] ;
     then
       echo -e "O usuário $usuario já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
-      adduser --system --no-create-home --quiet "$usuario"
+      adduser --system --no-create-home --force-badname --quiet "$usuario"
       if [ $? -ne "0" ];
         then
-          read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+          read -p "Um erro ocorreu ao tentar criar o usuário no sistema. Tecle <Enter> para retornar ao menu."
         else
           echo -e "\e[34;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
           smbpasswd -a "$usuario"
           if [ $? -ne "0" ];
             then
-              read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+              read -p "Um erro ocorreu ao tentar criar o usuário no Samba. Tecle <Enter> para retornar ao menu."
             else
               clear
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
@@ -169,18 +170,18 @@ remove_usuario() {
   echo -e "\e[34;1;1m- - - - -\e[m \n"
   unset usuario
   read -p "Digite o nome do usuário a ser removido: " usuario
-  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
   if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "$admin" ] ;
     then
       smbpasswd -x "$usuario"
       if [ $? -ne "0" ];
         then
-          read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+          read -p "Um erro ocorreu ao tentar remover o usuário no Samba. Tecle <Enter> para retornar ao menu."
         else
-          deluser "$usuario"
+          deluser -q "$usuario"
           if [ $? -ne "0" ];
             then
-              read -p "Um erro ocorreu. Tecle <Enter> para retornar ao menu."
+              read -p "Um erro ocorreu ao tentar remover o usuário no sistema. Tecle <Enter> para retornar ao menu."
             else
               clear
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
@@ -265,8 +266,8 @@ adiciona_a_grupo() {
       cat $listausuarios
       echo -e "\e[34;1;1m- - - - -\e[m \n"
       read -p "Qual usuário você deseja adicionar ao grupo $grupo? Digite o nome: " usuario
-      usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
-      if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "$admin" ] ;
+      usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
+      if grep -q "$usuario" "$listausuarios" ;
         then
           gpasswd -a "$usuario" "$grupo"
           if [ $? -ne "0" ];
@@ -303,7 +304,7 @@ remove_de_grupo() {
       getent group "$grupo" | cut -d: -f4 | tr ',' '\n'
       echo -e "\e[34;1;1m- - - - -\e[m \n"
       read -p "Qual usuário você deseja remover do grupo $grupo? Digite o nome: " usuario
-      usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+      usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
       if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "$admin" ] ;
         then
           gpasswd -d "$usuario" "$grupo"
