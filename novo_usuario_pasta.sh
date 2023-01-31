@@ -152,8 +152,9 @@ cria_usuario() {
               clear
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
               echo "$usuario" >> $listausuarios
+              gpasswd -a "$usuario" "todos"
               echo -e "$momento - O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso!" >> $log
-              echo -e "O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso! \n"
+              echo -e "O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso e também adicionado automaticamente ao grupo Todos! \n"
               read -p "Tecle <Enter> para continuar..."
               #perguntar se deseja criar grupo com mesmo nome
           fi
