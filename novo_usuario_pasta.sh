@@ -26,7 +26,7 @@ cria_pasta() {
           sleep 1
           break ;;
         s|S) menu_altera_permissao 1 ;;
-        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n" 
+        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n"
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
     else
@@ -139,7 +139,8 @@ cria_usuario() {
       echo -e "O usuário $usuario já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
-      adduser --system --no-create-home --force-badname --quiet "$usuario"
+      useradd --no-create-home --badnames -s /sbin/nologin "$usuario"
+      #adduser --system --no-create-home --force-badname --quiet "$usuario"
       if [ $? -ne "0" ];
         then
           read -p "Um erro ocorreu ao tentar criar o usuário no sistema. Tecle <Enter> para retornar ao menu."
@@ -157,6 +158,7 @@ cria_usuario() {
               echo -e "$momento - O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso!" >> $log
               echo -e "O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso e também adicionado automaticamente ao grupo Todos! \n"
               read -p "Tecle <Enter> para continuar..."
+              #adicione este usuário a um grupo
               #perguntar se deseja criar grupo com mesmo nome
           fi
       fi
@@ -398,6 +400,13 @@ if [ $? -ne "0" ];
     done
 fi
 
+echo "Reiniciando serviços Samba..."
+service smbd stop
+service nmbd stop
+service nmbd start
+service smbd start
+sleep 1
+clear
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 echo -e "$momento - Script encerrado. \n-------------------" >> $log
 echo -e "$momento - \e[34;1;1mScript encerrado.\e[m \n"
