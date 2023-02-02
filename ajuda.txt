@@ -1,7 +1,22 @@
 Script utilizado para a criação segura de pastas, usuários e grupos de acesso ao compartilhamento...
 
-Uso: ./novo_usuario_pasta.sh [Opção]
+Uso: compartilhamento [Opção]
 
 Opção           Significado
---log           Exibe o arquivo de LOG de funcionamento do script e sai
--h              Mostra esse texto de ajuda e sai
+-l --log        Exibe o arquivo de LOG de funcionamento do script e sai
+-h --help       Mostra esse texto de ajuda e sai
+-u	        Mostra a lista de usuários que acessam o compartilhamento e sai
+-g	        Mostra a lista de grupos que acessam o compartilhamento e sai
+-r	        Reinicia os serviços Samba necessários para aplicar alterações e sai
+
+Boas práticas na utilização:
+- Criar PASTAS, GRUPOS e USUÁRIOS apenas pelo script, para manter o padrão correto.
+- Usáarios não deverão ser donos de pastas, o controle deverá ser feito apenas por grupos;
+em casos das pastas de usuários específicos, deverá ser utilizado o grupo de mesmo nome do usuário
+que é criado automáticamente pelo sistema;
+- Criação de USUÁRIOS, GRUPOS ou PASTAS com nomes compostos poderão usar espaço, pois o script
+vai tratar de manter no padrão.
+
+OBS:
+Para as alterações feitas pelo script funcionarem, torna-se necessário finalizar pela
+opção Sair no menu, assim os serviços do Samba serão reiniciados corretamente.
