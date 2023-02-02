@@ -1,7 +1,6 @@
 #!/bin/bash
 ### Patrick R. Faria - GTI ###
 log="/var/log/novo_usuario_pasta.log"
-raiz="/home/gti/compartilhamentos/"
 listagrupos="/var/local/grupos.txt"
 listausuarios="/var/local/usuarios.txt"
 ajuda="/var/local/ajuda.txt"
@@ -30,9 +29,15 @@ cria_pasta() {
           read -p "Tecle <Enter> para retornar ao menu." ;;
       esac
     else
-      unset nomepasta
       read -p "Qual o nome da pasta que deseja criar? " nomepasta
       nomepasta=$(echo "$nomepasta" | sed -r 's/(.*)/\U\1/g')
+      read -p "Esta é uma pasta de setor ou de usuário? (S)etor ou (U)suário? " opcao_raiz
+      case $opcao_raiz in
+        s|S|"setor") raiz="/home/compartilhamentos/" ;;
+        u|U|"usuario") raiz="/home/usuarios/" ;;
+        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n"
+          read -p "Tecle <Enter> para retornar ao menu." ;;
+      esac
       pasta="$raiz$nomepasta"
       if [ -d "$pasta" ] ;
         then
@@ -75,7 +80,7 @@ altera_permissao() {
   echo -e "\e[34;1;1m- - - - -\e[m \n"
   unset grupo
   read -p "Qual grupo acima deve ser dono desta pasta? Digite o nome: " grupo
-  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  grupo=$(echo "$grupo" | sed 's/ /\./g')
   if [ $(getent group "$grupo") ] ;
     then
       chgrp -R "$grupo" "$pasta"
@@ -108,6 +113,14 @@ menu_altera_permissao() {
     then
       altera_permissao
     else
+      read -p "É uma pasta de setor ou de usuário? (S)etor ou (U)suário? " opcao_raiz
+      case $opcao_raiz in
+        s|S|"setor") raiz="/home/compartilhamentos/" ;;
+        u|U|"usuario") raiz="/home/usuarios/" ;;
+        *) echo -e "\e[0;41;1mOpção incorreta!\e[m \n"
+          read -p "Tecle <Enter> para retornar ao menu." ;;
+      esac
+      ls "$raiz"
       read -p "Qual pasta deseja alterar a permisão? " nomepasta
       nomepasta=$(echo "$nomepasta" | sed -r 's/(.*)/\U\1/g')
       pasta="$raiz$nomepasta"
@@ -139,7 +152,7 @@ cria_usuario() {
       echo -e "O usuário $usuario já existe, tente outro nome.\n"
       read -p "Tecle <Enter> para retornar ao menu."
     else
-      useradd --no-create-home --badnames -s /sbin/nologin "$usuario"
+      useradd --no-create-home -s /sbin/nologin "$usuario"
       if [ $? -ne "0" ];
         then
           read -p "Um erro ocorreu ao tentar criar o usuário no sistema. Tecle <Enter> para retornar ao menu."
@@ -153,7 +166,9 @@ cria_usuario() {
               clear
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
               echo "$usuario" >> $listausuarios
+              echo "$usuario" >> $listagrupos
               gpasswd -a "$usuario" "todos"
+              gpasswd -a "$usuario" "$usuario"
               echo -e "$momento - O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso!" >> $log
               echo -e "O usuário \e[34;1;1m$usuario\e[m foi criado com sucesso e também adicionado automaticamente ao grupo Todos! \n"
               read -p "Tecle <Enter> para continuar..."
@@ -172,7 +187,7 @@ remove_usuario() {
   unset usuario
   read -p "Digite o nome do usuário a ser removido: " usuario
   usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
-  if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "$admin" ] ;
+  if grep -q "$usuario" "$listausuarios" && [ "$usuario" != "gti" ] ;
     then
       smbpasswd -x "$usuario"
       if [ $? -ne "0" ];
@@ -187,6 +202,7 @@ remove_usuario() {
               clear
               momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
               sed -i "/$usuario/d" $listausuarios
+              sed -i "/$usuario/d" $listagrupos
               echo -e "$momento - Usuário \e[34;1;1m$usuario\e[m removido." >> $log
               echo -e "Usuário \e[34;1;1m$usuario\e[m removido completamente. \n"
               read -p "Tecle <Enter> para continuar..."
@@ -202,7 +218,7 @@ remove_usuario() {
 cria_grupo() {
   clear
   read -p "Digite um nome para o novo grupo: " grupo
-  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
   if [ $(getent group "$grupo") ] ;
     then
       echo -e "O grupo $grupo já existe, tente outro nome.\n"
@@ -232,7 +248,7 @@ remove_grupo() {
   cat $listagrupos
   echo -e "\e[34;1;1m- - - - -\e[m \n"
   read -p "Digite o nome do grupo a ser excluído: " grupo
-  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
   if grep -q "$grupo" "$listagrupos" && [ "$grupo" != "$admin" ] ;
     then
       groupdel -f "$grupo"
@@ -259,7 +275,7 @@ adiciona_a_grupo() {
   cat $listagrupos
   echo -e "\e[34;1;1m- - - - -\e[m \n"
   read -p "Em qual grupo você deseja adicionar o usuário? Digite o nome: " grupo
-  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  grupo=$(echo "$grupo" | sed 's/ /\./g')
   if grep -q "$grupo" "$listagrupos" ;
     then
       clear
@@ -267,7 +283,7 @@ adiciona_a_grupo() {
       cat $listausuarios
       echo -e "\e[34;1;1m- - - - -\e[m \n"
       read -p "Qual usuário você deseja adicionar ao grupo $grupo? Digite o nome: " usuario
-      usuario=$(echo "$usuario" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
+      usuario=$(echo "$usuario" | sed 's/ /\./g')
       if grep -q "$usuario" "$listausuarios" ;
         then
           gpasswd -a "$usuario" "$grupo"
@@ -297,7 +313,7 @@ remove_de_grupo() {
   cat $listagrupos
   echo -e "\e[34;1;1m- - - - -\e[m \n"
   read -p "De qual grupo você deseja remover o usuário? Digite o nome: " grupo
-  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\_/g')
+  grupo=$(echo "$grupo" | sed -r 's/(.*)/\L\1/g' | sed 's/ /\./g')
   if grep -q "$grupo" "$listagrupos" ;
     then
       clear
@@ -329,6 +345,24 @@ remove_de_grupo() {
   fi
 }
 
+reinicia_servico() {
+    echo "Reiniciando serviços Samba..."
+    systemctl stop smbd
+    if [ $? -ne "0" ];
+      then
+        service smbd stop
+        service nmbd stop
+        service nmbd start
+        service smbd start
+      else
+        systemctl stop nmbd
+        systemctl start nmbd
+        systemctl start smbd
+    fi
+    sleep 1
+    echo "Serviços reiniciados com sucesso."
+}
+
 menu_inicial() {
     clear
     echo -e "\e[34;1;1m##### ##### ##### ##### ##### ##### #####\n > Informe o número da opção desejada:\e[m"
@@ -351,15 +385,26 @@ verifica_SU() {
   return $USER_ID
 }
 
-if [ "$1" == "--log" ] ;
+if [ "$1" == "-l" ] || [ "$1" == "--log" ] ;
   then
     cat "$log"
     exit 1
   elif [ "$1" == "" ] ; then
     break
-  elif [ "$1" == "-h" ] ; then
+  elif [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "--ajuda" ] ; then
     cat "$ajuda"
-    echo -e "\n"
+    echo -e ""
+    exit 1
+  elif [ "$1" == "-u" ] ; then
+    cat "$listausuarios"
+    echo -e ""
+    exit 1
+  elif [ "$1" == "-g" ] ; then
+    cat "$listagrupos"
+    echo -e ""
+    exit 1
+  elif [ "$1" == "-r" ] ; then
+    reinicia_servico
     exit 1
   else
     echo -e "\e[0;41;1mParametro inválido!\e[m Tente \e[1;33;1m-h\e[m para ajuda.\n"
@@ -399,12 +444,7 @@ if [ $? -ne "0" ];
     done
 fi
 
-echo "Reiniciando serviços Samba..."
-service smbd stop
-service nmbd stop
-service nmbd start
-service smbd start
-sleep 1
+reinicia_servico
 clear
 momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
 echo -e "$momento - Script encerrado. \n-------------------" >> $log
