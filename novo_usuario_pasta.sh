@@ -155,7 +155,8 @@ cria_usuario() {
       useradd --no-create-home -s /sbin/nologin "$usuario"
       if [ $? -ne "0" ];
         then
-          read -p "Um erro ocorreu ao tentar criar o usuário no sistema. Tecle <Enter> para retornar ao menu."
+          useradd --no-create-home -s /sbin/nologin "$usuario" -g "$usuario"
+          #read -p "Um erro ocorreu ao tentar criar o usuário no sistema. Tecle <Enter> para retornar ao menu."
         else
           echo -e "\e[34;1;1mCrie uma senha para acessar o compartilhamento de pastas.\e[m"
           smbpasswd -a "$usuario"
@@ -232,6 +233,7 @@ cria_grupo() {
           gpasswd -a "$admin" "$grupo"
           momento=`TZ='America/Sao_Paulo' date +%d/%m/%Y-%H:%M:%S`
           echo "$grupo" >> $listagrupos
+          #echo "$grupo" >> $listausuarios
           echo -e "$momento - O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! O usuário $admin foi adicionado automaticamente a este grupo." >> $log
           echo -e "O grupo \e[34;1;1m$grupo\e[m foi criado com sucesso! \nO usuário $admin foi adicionado automaticamente a este grupo. \n"
           read -p "Tecle <Enter> para continuar..."
